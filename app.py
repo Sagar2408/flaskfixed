@@ -3,8 +3,18 @@ from flask_socketio import SocketIO, emit, join_room
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# ✅ CORS config to allow requests from your frontend on Vercel
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# ✅ SocketIO setup with threading for Python 3.13 compatibility
+socketio = SocketIO(
+    app,
+    cors_allowed_origins="*",   # For development. Use exact URL in production
+    async_mode='threading',
+    logger=True,
+    engineio_logger=True
+)
 
 @app.route('/')
 def index():
@@ -12,11 +22,11 @@ def index():
 
 @socketio.on('connect')
 def handle_connect():
-    print("Client connected")
+    print("🟢 Client connected")
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    print("Client disconnected")
+    print("🔴 Client disconnected")
 
 @socketio.on('join-room')
 def handle_join(room):
