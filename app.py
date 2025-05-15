@@ -1,10 +1,21 @@
 from flask import Flask
 from flask_socketio import SocketIO, emit, join_room
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
-CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+
+# ✅ CORS configuration — allow your Vercel frontend
+CORS(app, resources={r"/*": {"origins": "https://castfrontend.vercel.app"}})
+
+# ✅ Use threading async_mode (eventlet removed)
+socketio = SocketIO(
+    app,
+    cors_allowed_origins="https://castfrontend.vercel.app",
+    async_mode='threading',
+    logger=True,
+    engineio_logger=True
+)
 
 @app.route('/')
 def index():
@@ -12,11 +23,11 @@ def index():
 
 @socketio.on('connect')
 def handle_connect():
-    print("Client connected")
+    print("🟢 Client connected")
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    print("Client disconnected")
+    print("🔴 Client disconnected")
 
 @socketio.on('join-room')
 def handle_join(room):
@@ -42,4 +53,6 @@ def handle_video(data):
     emit('video-data', data.get("data"), room=room)
 
 if __name__ == '__main__':
-    socketio.run(app, host="0.0.0.0", port=10000)
+    # ✅ Use dynamic port for Render hosting
+    port = int(os.environ.get("PORT", 10000))
+    socketio.run(app, host="0.0.0.0", port=port)
